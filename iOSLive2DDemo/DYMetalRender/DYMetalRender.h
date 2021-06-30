@@ -26,6 +26,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) CGFloat scale;
 @property (nonatomic, assign) matrix_float4x4 transform;
 
+@property (nonatomic, assign) MTLClearColor clearColor;
+
+
+- (void)update:(NSTimeInterval)time;
+
 
 /// 初始化DYMetalRender
 /// @param device  代表GPU硬件的对象，一般由MTLCreateSystemDefaultDevice生成

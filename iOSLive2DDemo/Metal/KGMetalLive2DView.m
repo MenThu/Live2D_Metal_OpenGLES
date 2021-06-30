@@ -11,6 +11,10 @@
 #import "UIColor+Live2D.h"
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#import "DYMTLTexturePixelMapper.h"
+#import "DYMetalRender.h"
+
+#define USE_DYMETAL_RENDER 1
 
 @interface KGMetalLive2DView () <MTKViewDelegate>
 @property (nonatomic, strong) L2DUserModel *model;
@@ -19,8 +23,14 @@
 @property (nonatomic, assign) MTLViewport viewPort;
 @property (nonatomic, strong) id<MTLCommandQueue> commandQueue;
 @property (nonatomic, strong) NSMutableArray<L2DMetalRender *> *renderers;
+
 /// 背景色
 @property (nonatomic, assign) MTLClearColor clearColor;
+
+#if USE_DYMETAL_RENDER == 1
+@property (nonatomic, strong) DYMetalRender *dyRender;
+#endif
+
 @end
 
 @implementation KGMetalLive2DView
@@ -30,7 +40,13 @@
 
     self.renderers = [NSMutableArray array];
     [self setupMtkView];
-    [self startRenderWithMetal];
+    
+#if USE_DYMETAL_RENDER == 1
+    DYMetalRender *dyRender = [[DYMetalRender alloc] initWithDevice:self.mtkView.device
+                                                        pixelFormat:self.mtkView.colorPixelFormat];
+    dyRender.drawableSize = self.mtkView.drawableSize;
+    self.dyRender = dyRender;
+#endif
 
     self.backgroundColor = UIColor.clearColor;
 
@@ -38,6 +54,7 @@
                                              selector:@selector(applicationDidEnterBackground)
                                                  name:UIApplicationDidEnterBackgroundNotification
                                                object:nil];
+    
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -77,22 +94,18 @@
 }
 
 #pragma mark - setter
-- (void)setDelegate:(id<MetalRenderDelegate>)delegate {
-    if (!self.renderer) {
-        return;
-    }
-    _delegate = delegate;
-
-    self.renderer.delegate = delegate;
-}
+//- (void)setDelegate:(id<MetalRenderDelegate>)delegate {
+//    if (!self.renderer) {
+//        return;
+//    }
+//    _delegate = delegate;
+//}
 
 - (void)setDidCreatedTransformBuffer:(void (^)(void))didCreatedTransformBuffer {
     if (!self.renderer) {
         return;
     }
     _didCreatedTransformBuffer = didCreatedTransformBuffer;
-
-    self.renderer.didCreatedTransformBuffer = didCreatedTransformBuffer;
 }
 
 - (void)setFrame:(CGRect)frame {
@@ -127,6 +140,10 @@
     RGBA rgba = backgroundColor.rgba;
 
     self.clearColor = MTLClearColorMake(rgba.r, rgba.g, rgba.b, rgba.a);
+    
+    
+//    self.clearColor = MTLClearColorMake(1, 0, 0, 0);
+    
     self.mtkView.clearColor = self.clearColor;
 
     self.renderer.clearColor = self.clearColor;
@@ -177,11 +194,14 @@
         return;
     }
     self.model = [[L2DUserModel alloc] initWithJsonDir:dirName mocJsonName:mocJsonName];
-    if (_renderer) {
-        [self removeRenderer:self.renderer];
-        self.renderer = nil;
-    }
+//    if (_renderer) {
+//        [self removeRenderer:self.renderer];
+//        self.renderer = nil;
+//    }
     self.renderer.model = self.model;
+#if USE_DYMETAL_RENDER == 1
+    [self.dyRender loadLive2DModel:self.model];
+#endif
 
     [self addRenderer:self.renderer];
 }
@@ -210,25 +230,13 @@
     if (!self.mtkView) {
         return;
     }
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    if (!device) {
-        return;
-    }
-    self.commandQueue = [device newCommandQueue];
-
-    self.mtkView.device = device;
     self.mtkView.paused = false;
     self.mtkView.hidden = false;
-
-    for (L2DMetalRender *render in self.renderers) {
-        [render startWithView:self.mtkView];
-    }
 }
 
 - (void)stopMetalRender {
     self.mtkView.paused = true;
     self.mtkView.hidden = true;
-    self.mtkView.device = nil;
 }
 
 - (void)addRenderer:(L2DMetalRender *)render {
@@ -241,8 +249,6 @@
         if (self.renderers.count == 1) {
             [self startRenderWithMetal];
         }
-    } else {
-        [render startWithView:self.mtkView];
     }
 }
 
@@ -255,7 +261,15 @@
 }
 
 - (void)setupMtkView {
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    if (!device) {
+        return;
+    }
+    self.commandQueue = [device newCommandQueue];
+
+    
     MTKView *mtkView = [[MTKView alloc] initWithFrame:self.bounds];
+    mtkView.device = device;
     mtkView.opaque = NO;
     mtkView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self addSubview:mtkView];
@@ -264,12 +278,18 @@
     mtkView.preferredFramesPerSecond = 30;
     mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
     self.mtkView = mtkView;
-
+    
+    
+    
     [self updateMTKViewPort];
+    
+    L2DMetalRender *render = [[L2DMetalRender alloc] initWithDevice:device pixelFormat:mtkView.colorPixelFormat];
+    self.renderer = render;
 }
 
 - (void)updateMTKViewPort {
     CGSize size = self.mtkView.drawableSize;
+    NSLog(@"menthuguan debug ======= [%s] size=[%@]", __PRETTY_FUNCTION__, NSStringFromCGSize(size));
     MTLViewport viewport = {};
     viewport.znear = 0.0;
     viewport.zfar = 1.0;
@@ -289,6 +309,7 @@
 }
 
 - (void)clearDrawable:(id<CAMetalDrawable>)drawable commandBuffer:(id<MTLCommandBuffer>)commandBuffer {
+    return;
     MTLRenderPassDescriptor *renderOldDescriptor = [[MTLRenderPassDescriptor alloc] init];
     renderOldDescriptor.colorAttachments[0].texture = drawable.texture;
     renderOldDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
@@ -302,9 +323,13 @@
 
 #pragma mark - MTKViewDelegate
 - (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
-    for (L2DMetalRender *render in self.renderers) {
-        [render drawableSizeWillChange:view size:size];
-    }
+//    for (L2DMetalRender *render in self.renderers) {
+//        render.drawableSize = size;
+//    }
+    self.renderer.drawableSize = size;
+#if USE_DYMETAL_RENDER == 1
+    self.dyRender.drawableSize = size;
+#endif
 }
 
 - (void)drawInMTKView:(MTKView *)view {
@@ -327,15 +352,24 @@
         // 然后创建
         MTLRenderPassDescriptor *renderPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
         renderPassDescriptor.colorAttachments[0].texture = view.currentDrawable.texture;
-        renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
+        renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
         renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
         // 设置默认颜色
         renderPassDescriptor.colorAttachments[0].clearColor = self.clearColor;
 
         // Renderers.
+#if USE_DYMETAL_RENDER == 1
+        [self.dyRender update:time];
+        [self.dyRender renderWithinViewPort:self.viewPort
+                              commandBuffer:commandBuffer
+                             passDescriptor:renderPassDescriptor];
+#else
         for (L2DMetalRender *render in self.renderers) {
             [render beginRenderWithTime:time viewPort:self.viewPort commandBuffer:commandBuffer passDescriptor:renderPassDescriptor];
         }
+#endif
+        
+        
         [commandBuffer presentDrawable:view.currentDrawable];
         @try {
             [commandBuffer commit];
@@ -343,29 +377,40 @@
             NSLog(@"commandBuffer commit exception");
         } @finally {
         }
+#if USE_DYMETAL_RENDER == 1
+        [self testPixelBuffer];
+#endif
     }
 }
+
+- (void)testPixelBuffer {
+    static NSInteger frameCount = 0;
+    if (++frameCount % 100 == 0) {
+        frameCount = 0;
+    }
+}
+
 
 #pragma mark - lazy load
-- (L2DMetalRender *)renderer {
-    if (!_renderer) {
-        _renderer = [[L2DMetalRender alloc] init];
-        __weak __typeof(self) weakSelf = self;
-
-        _renderer.didCreatedTransformBuffer = ^{
-            __strong __typeof(weakSelf) self = weakSelf;
-            if (self.didCreatedTransformBuffer) {
-                self.didCreatedTransformBuffer();
-            } else {
-                L2DMetalRender *renderer = self.renderer;
-                renderer.scale = 1 / renderer.defaultRenderScale;
-            }
-        };
-
-        if (self.delegate) {
-            _renderer.delegate = self.delegate;
-        }
-    }
-    return _renderer;
-}
+//- (L2DMetalRender *)renderer {
+//    if (!_renderer) {
+//        _renderer = [[L2DMetalRender alloc] init];
+//        __weak __typeof(self) weakSelf = self;
+//
+//        _renderer.didCreatedTransformBuffer = ^{
+//            __strong __typeof(weakSelf) self = weakSelf;
+//            if (self.didCreatedTransformBuffer) {
+//                self.didCreatedTransformBuffer();
+//            } else {
+//                L2DMetalRender *renderer = self.renderer;
+//                renderer.scale = 1.2;
+//            }
+//        };
+//
+//        if (self.delegate) {
+//            _renderer.delegate = self.delegate;
+//        }
+//    }
+//    return _renderer;
+//}
 @end

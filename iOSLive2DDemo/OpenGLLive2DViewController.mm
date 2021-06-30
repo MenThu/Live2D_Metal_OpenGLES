@@ -59,7 +59,8 @@
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
-    self.live2DView.frame = CGRectMake(0, 200, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame) * 1 - 300);
+//    self.live2DView.frame = CGRectMake(0, 200, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame) * 1 - 300);
+    self.live2DView.frame = self.view.bounds;
 
     if (!self.hasLoadResource) {
         [self.live2DView loadLive2DModelWithDir:@"Live2DResources/Shanbao/" mocJsonName:@"Shanbao.model3.json"];

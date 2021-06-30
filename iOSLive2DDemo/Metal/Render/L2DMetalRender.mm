@@ -8,9 +8,12 @@
 #import "L2DMetalRender.h"
 #import "L2DUserModel.h"
 #import "L2DMetalDrawable.h"
+#import "DYMTLTexturePixelMapper.h"
+#import "DYShaderTypes.h"
 
 @interface L2DMetalRender ()
-@property (nonatomic, nullable, strong) MTKView *view;
+@property (nonatomic, nullable, strong) id <MTLDevice> device;
+@property (nonatomic, assign) MTLPixelFormat pixelFormat;
 /// Render pipelines.
 @property (nonatomic, nonnull, strong) id<MTLRenderPipelineState> pipelineStateBlendingAdditive;
 @property (nonatomic, nonnull, strong) id<MTLRenderPipelineState> pipelineStateBlendingMultiplicative;
@@ -23,29 +26,39 @@
 @property (nonatomic, nonnull, strong) id<MTLBuffer> transformBuffer;
 /// Textures.
 @property (nonatomic, nonnull, strong) NSMutableArray<id<MTLTexture>> *textures;
+
+
+@property (nonatomic, strong, readwrite) DYMTLTexturePixelMapper *texturePixelMapper;
+@property (nonatomic, strong) MTLRenderPassDescriptor *renderToTextureRenderPassDescriptor;
+@property (nonatomic, strong) id<MTLRenderPipelineState> pipelineStateUploadTexture;
+
+
 @end
 
 @implementation L2DMetalRender
 
-- (instancetype)init {
-    self = [super init];
-    if (self) {
+#pragma mark - LifeCycle
+- (instancetype)initWithDevice:(id<MTLDevice>)device pixelFormat:(MTLPixelFormat)pixelFormat{
+    if (self = [super init]) {
         _origin = CGPointZero;
         _scale = 1.0;
         _transform = matrix_identity_float4x4;
         _drawables = [NSMutableArray array];
         _drawableSorted = [NSMutableArray array];
         _textures = [NSMutableArray array];
+        self.device = device;
+        self.pixelFormat = pixelFormat;
+        [self createPipelineStatesWithView:device];
     }
     return self;
 }
 
 - (void)dealloc {
-    NSLog(@"L2DMetalRender dealloc - %p", self);
+    NSLog(@"[%@] dealloc - %p", NSStringFromClass(self.class), self);
 }
 
-- (void)createBuffersWithView:(MTKView *)view {
-    id<MTLDevice> device = view.device;
+#pragma mark - ConfigMetal
+- (void)createBuffersWithView:(id<MTLDevice>)device {
     if (!device) {
         return;
     }
@@ -56,12 +69,6 @@
 
     matrix_float4x4 transform = self.transform;
     self.transformBuffer = [device newBufferWithBytes:&(transform) length:sizeof(matrix_float4x4) options:MTLResourceCPUCacheModeDefaultCache];
-
-    if (self.transformBuffer) {
-        if (self.didCreatedTransformBuffer) {
-            self.didCreatedTransformBuffer();
-        }
-    }
 
     int drawableCount = model.drawableCount;
     [self.drawables removeAllObjects];
@@ -110,10 +117,10 @@
 
             // Opacity.
             drawable.opacity = [model opacityForDrawable:i];
-
-            float *list = [self convertFloat2FloatArray:drawable.opacity];
+            
+            float opacity = drawable.opacity;
+            float *list = (float *)&opacity;
             drawable.opacityBuffer = [device newBufferWithBytes:list length:sizeof(float) options:MTLResourceCPUCacheModeDefaultCache];
-            free(list);
 
             drawable.visibility = [model visibilityForDrawable:i];
 
@@ -135,14 +142,7 @@
     }];
 }
 
-- (float *)convertFloat2FloatArray:(float)f {
-    float *list = (float *)malloc(sizeof(float) * 1);
-    list[0] = f;
-    return list;
-}
-
-- (void)createTexturesWithView:(MTKView *)view {
-    id<MTLDevice> device = view.device;
+- (void)createTexturesWithView:(id<MTLDevice>)device {
     if (!device) {
         return;
     }
@@ -150,11 +150,6 @@
     if (!model) {
         return;
     }
-
-    CGSize size = view.drawableSize;
-
-    if (CGSizeEqualToSize(CGSizeZero, size)) return;
-
     if (model.textureURLs) {
         MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
         [self.textures removeAllObjects];
@@ -169,24 +164,10 @@
             }
         }
     }
-
-    for (L2DMetalDrawable *drawable in self.drawables) {
-        @autoreleasepool {
-            if (drawable.maskCount > 0) {
-                MTLTextureDescriptor *maskTextureDesc = [[MTLTextureDescriptor alloc] init];
-                maskTextureDesc.pixelFormat = MTLPixelFormatBGRA8Unorm;
-                maskTextureDesc.storageMode = MTLStorageModePrivate;
-                maskTextureDesc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-                maskTextureDesc.width = (int)size.width;
-                maskTextureDesc.height = (int)size.height;
-                drawable.maskTexture = [device newTextureWithDescriptor:maskTextureDesc];
-            }
-        }
-    }
+    [self configDrawableMaskTextureIfNeed];
 }
 
-- (void)createPipelineStatesWithView:(MTKView *)view {
-    id<MTLDevice> device = view.device;
+- (void)createPipelineStatesWithView:(id<MTLDevice>)device {
     if (!device) {
         return;
     }
@@ -282,9 +263,86 @@
     pipelineDesc.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
 
     self.pipelineStateMasking = [device newRenderPipelineStateWithDescriptor:pipelineDesc error:&error];
+    
+    
+    //上传纹理的RenderPipeline
+    MTLRenderPipelineDescriptor *pipelineUploadTextureDesc = [[MTLRenderPipelineDescriptor alloc] init];
+    pipelineUploadTextureDesc.sampleCount = 1;
+    pipelineUploadTextureDesc.label = @"Upload Texture 2 Outside RenderPassDescriptor Render Pipeline";
+    pipelineUploadTextureDesc.vertexFunction = [library newFunctionWithName:@"textureVertexShader"];
+    pipelineUploadTextureDesc.fragmentFunction = [library newFunctionWithName:@"textureFragmentShader"];
+    pipelineUploadTextureDesc.colorAttachments[0].pixelFormat = self.pixelFormat;
+    if (@available(iOS 11.0, *)) {
+        pipelineUploadTextureDesc.vertexBuffers[DYVertexInputIndexVertices].mutability = MTLMutabilityImmutable;
+    }
+    id <MTLRenderPipelineState> pipelineStateUploadTexture =
+    [device newRenderPipelineStateWithDescriptor:pipelineUploadTextureDesc
+                                           error:&error];
+    if (pipelineStateUploadTexture == nil || error) {
+        NSLog(@"Failed to create pipeline state to render to screen: %@", error);
+        return;
+    }
+    self.pipelineStateUploadTexture = pipelineStateUploadTexture;
 }
 
-/// Update drawables with dynamics flag.
+- (void)configTexturePixelMapperIfNeed{
+    CGSize drawableSize = self.drawableSize;
+    if (CGSizeEqualToSize(drawableSize, CGSizeZero)) {
+        return;
+    }
+    if (_renderToTextureRenderPassDescriptor == nil) {
+        _renderToTextureRenderPassDescriptor = [MTLRenderPassDescriptor new];
+        _renderToTextureRenderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+        _renderToTextureRenderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+        _renderToTextureRenderPassDescriptor.colorAttachments[0].clearColor = self.clearColor;
+    }
+    if (self.texturePixelMapper == nil ||
+        CGSizeEqualToSize(self.texturePixelMapper.currentTextureSize, drawableSize) == NO) {
+        self.texturePixelMapper = [[DYMTLTexturePixelMapper alloc] initWithMetalDevice:self.device
+                                                                      metalPixelFormat:self.pixelFormat
+                                                                                  size:drawableSize];
+    }
+}
+
+- (void)configDrawableMaskTextureIfNeed{
+    CGSize size = self.drawableSize;
+    if (CGSizeEqualToSize(size, CGSizeZero)) {
+        return;
+    }
+    id <MTLDevice> device = self.device;
+    for (L2DMetalDrawable *drawable in self.drawables) {
+        @autoreleasepool {
+            if (drawable.maskCount > 0) {
+                MTLTextureDescriptor *maskTextureDesc = [[MTLTextureDescriptor alloc] init];
+                maskTextureDesc.pixelFormat = MTLPixelFormatBGRA8Unorm;
+                maskTextureDesc.storageMode = MTLStorageModePrivate;
+                maskTextureDesc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+                maskTextureDesc.width = (int)size.width;
+                maskTextureDesc.height = (int)size.height;
+                drawable.maskTexture = [device newTextureWithDescriptor:maskTextureDesc];
+            }
+        }
+    }
+}
+
+#pragma mark - Public
+- (void)update:(NSTimeInterval)time {
+    [self.model updateWithDeltaTime:time];
+    [self.model update];
+    [self updateDrawables];
+}
+
+- (void)beginRenderWithTime:(NSTimeInterval)time
+                   viewPort:(MTLViewport)viewPort
+              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+             passDescriptor:(MTLRenderPassDescriptor *)passDescriptor {
+    [self renderMasksWithViewPort:viewPort commandBuffer:commandBuffer];
+    [self renderDrawablesWithViewPort:viewPort
+                        commandBuffer:commandBuffer
+                       passDescriptor:passDescriptor];
+}
+
+#pragma mark - Render
 - (void)updateDrawables {
     L2DUserModel *model = self.model;
     if (!model) {
@@ -297,15 +355,13 @@
             if ([model isOpacityDidChangedForDrawable:index]) {
                 drawable.opacity = [model opacityForDrawable:index];
                 if (drawable.opacityBuffer.contents) {
-                    float *list = [self convertFloat2FloatArray:drawable.opacity];
+                    float opacity = drawable.opacity;
+                    float *list = (float *)&opacity;
                     memcpy(drawable.opacityBuffer.contents, list, sizeof(float));
-                    free(list);
                 }
             }
 
-            if ([model visibilityForDrawable:index]) {
-                drawable.visibility = [model visibilityForDrawable:index];
-            }
+            drawable.visibility = [model visibilityForDrawable:index];
 
             if ([model isRenderOrderDidChangedForDrawable:index]) {
                 needSorting = true;
@@ -320,20 +376,20 @@
                 }
             }
         }
-        if (needSorting) {
-            NSArray<NSNumber *> *renderOrders = model.renderOrders.intArray;
-            self.drawableSorted = [self.drawables sortedArrayUsingComparator:^NSComparisonResult(L2DMetalDrawable *obj1, L2DMetalDrawable *obj2) {
-                NSComparisonResult result = NSOrderedAscending;
-                int obj1Value = renderOrders[obj1.drawableIndex].intValue;
-                int obj2Value = renderOrders[obj2.drawableIndex].intValue;
-                if (obj1Value > obj2Value) {
-                    result = NSOrderedDescending;
-                } else if (obj1Value == obj2Value) {
-                    result = NSOrderedSame;
-                }
-                return result;
-            }];
-        }
+    }
+    if (needSorting) {
+        NSArray<NSNumber *> *renderOrders = model.renderOrders.intArray;
+        self.drawableSorted = [self.drawables sortedArrayUsingComparator:^NSComparisonResult(L2DMetalDrawable *obj1, L2DMetalDrawable *obj2) {
+            NSComparisonResult result = NSOrderedAscending;
+            int obj1Value = renderOrders[obj1.drawableIndex].intValue;
+            int obj2Value = renderOrders[obj2.drawableIndex].intValue;
+            if (obj1Value > obj2Value) {
+                result = NSOrderedDescending;
+            } else if (obj1Value == obj2Value) {
+                result = NSOrderedSame;
+            }
+            return result;
+        }];
     }
 }
 
@@ -345,7 +401,7 @@
     passDesc.colorAttachments[0].clearColor = self.clearColor;
     for (L2DMetalDrawable *drawable in self.drawables) {
         @autoreleasepool {
-            if (drawable.maskCount > 0) {
+            if (drawable.maskCount > 0 && drawable.maskTexture) {
                 passDesc.colorAttachments[0].texture = drawable.maskTexture;
                 id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor:passDesc];
 
@@ -391,84 +447,118 @@
     }
 }
 
-- (void)renderDrawablesWithViewPort:(MTLViewport)viewPort commandBuffer:(id<MTLCommandBuffer>)commandBuffer passDescriptor:(MTLRenderPassDescriptor *)passDescriptor {
-    id<MTLRenderCommandEncoder> encoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
-    if (!encoder) {
-        return;
-    }
-    [encoder setViewport:viewPort];
-    [encoder setVertexBuffer:self.transformBuffer
-                      offset:0
-                     atIndex:L2DBufferIndexTransform];
-    for (L2DMetalDrawable *drawable in self.drawableSorted) {
-        @autoreleasepool {
-            // Bind vertex buffer.
-            [encoder setVertexBuffer:drawable.vertexPositionBuffer
-                              offset:0
-                             atIndex:L2DBufferIndexPosition];
-            [encoder setVertexBuffer:drawable.vertexTextureCoordinateBuffer
-                              offset:0
-                             atIndex:L2DBufferIndexUV];
-            [encoder setVertexBuffer:drawable.opacityBuffer
-                              offset:0
-                             atIndex:L2DBufferIndexOpacity];
+- (void)renderDrawablesWithViewPort:(MTLViewport)viewPort
+                      commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+                     passDescriptor:(MTLRenderPassDescriptor *)passDescriptor {
 
-            if (drawable.cullingMode) {
-                [encoder setCullMode:MTLCullModeBack];
-            } else {
-                [encoder setCullMode:MTLCullModeNone];
-            }
-
-            if (drawable.maskCount > 0) {
-                // Bind mask.
-                [encoder setRenderPipelineState:self.pipelineStateMasking];
-                [encoder setFragmentTexture:drawable.maskTexture atIndex:L2DTextureIndexMask];
-            } else {
-                switch (drawable.blendMode) {
-                    case L2DBlendModeAdditive:
-                        [encoder setRenderPipelineState:self.pipelineStateBlendingAdditive];
-                        break;
-                    case L2DBlendModeMultiplicative:
-                        [encoder setRenderPipelineState:self.pipelineStateBlendingMultiplicative];
-                        break;
-                    case L2DBlendModeNormal:
-                        [encoder setRenderPipelineState:self.pipelineStateBlendingNormal];
-                        break;
-                    default:
-                        [encoder setRenderPipelineState:self.pipelineStateBlendingNormal];
-                        break;
+    {//渲染到纹理
+        id<MTLRenderCommandEncoder> encoder =
+        [commandBuffer renderCommandEncoderWithDescriptor:self.renderToTextureRenderPassDescriptor];
+        if (!encoder) {
+            return;
+        }
+        [encoder setViewport:viewPort];
+        [encoder setVertexBuffer:self.transformBuffer
+                          offset:0
+                         atIndex:L2DBufferIndexTransform];
+        for (L2DMetalDrawable *drawable in self.drawableSorted) {
+            @autoreleasepool {
+                // Bind vertex buffer.
+                [encoder setVertexBuffer:drawable.vertexPositionBuffer
+                                  offset:0
+                                 atIndex:L2DBufferIndexPosition];
+                [encoder setVertexBuffer:drawable.vertexTextureCoordinateBuffer
+                                  offset:0
+                                 atIndex:L2DBufferIndexUV];
+                [encoder setVertexBuffer:drawable.opacityBuffer
+                                  offset:0
+                                 atIndex:L2DBufferIndexOpacity];
+                
+                if (drawable.cullingMode) {
+                    [encoder setCullMode:MTLCullModeBack];
+                } else {
+                    [encoder setCullMode:MTLCullModeNone];
                 }
-            }
-
-            if (drawable.visibility) {
-                // Bind uniform texture.
-                if (self.textures.count > drawable.textureIndex) {
-                    [encoder setFragmentTexture:self.textures[drawable.textureIndex] atIndex:L2DTextureIndexUniform];
+                
+                if (drawable.maskCount > 0) {
+                    // Bind mask.
+                    [encoder setRenderPipelineState:self.pipelineStateMasking];
+                    [encoder setFragmentTexture:drawable.maskTexture atIndex:L2DTextureIndexMask];
+                } else {
+                    switch (drawable.blendMode) {
+                        case L2DBlendModeAdditive:
+                            [encoder setRenderPipelineState:self.pipelineStateBlendingAdditive];
+                            break;
+                        case L2DBlendModeMultiplicative:
+                            [encoder setRenderPipelineState:self.pipelineStateBlendingMultiplicative];
+                            break;
+                        case L2DBlendModeNormal:
+                            [encoder setRenderPipelineState:self.pipelineStateBlendingNormal];
+                            break;
+                        default:
+                            [encoder setRenderPipelineState:self.pipelineStateBlendingNormal];
+                            break;
+                    }
                 }
-                if (drawable.vertexIndexBuffer) {
-                    [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
-                                        indexCount:drawable.indexCount
-                                         indexType:MTLIndexTypeUInt16
-                                       indexBuffer:drawable.vertexIndexBuffer
-                                 indexBufferOffset:0];
+                
+                if (drawable.visibility) {
+                    // Bind uniform texture.
+                    if (self.textures.count > drawable.textureIndex) {
+                        [encoder setFragmentTexture:self.textures[drawable.textureIndex] atIndex:L2DTextureIndexUniform];
+                    }
+                    if (drawable.vertexIndexBuffer) {
+                        [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                                            indexCount:drawable.indexCount
+                                             indexType:MTLIndexTypeUInt16
+                                           indexBuffer:drawable.vertexIndexBuffer
+                                     indexBufferOffset:0];
+                    }
                 }
             }
         }
+        [encoder endEncoding];
     }
-    [encoder endEncoding];
+    
+    {//将纹理内容渲染到passDescriptor.colorAttachments[0].texture上
+        static const DYTextureVertex quadVertices[] = {
+            // Positions,   Texture coordinates
+            {{1, -1},       {1.0, 1.0}},
+            {{-1, -1},      {0.0, 1.0}},
+            {{-1, 1},       {0.0, 0.0}},
+
+            {{1, -1},       {1.0, 1.0}},
+            {{-1, 1},       {0.0, 0.0}},
+            {{1, 1},        {1.0, 0.0}},
+        };
+        
+        id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
+        if (renderEncoder == nil) {
+            NSLog(@"create render for metallay failed");
+            return;
+        }
+        [renderEncoder setRenderPipelineState:self.pipelineStateUploadTexture];
+        [renderEncoder setVertexBytes:&quadVertices length:sizeof(quadVertices) atIndex:DYVertexInputIndexVertices];
+
+        // menthuguan add 这里先注释掉窗口变换相关的代码
+        //        [renderEncoder setVertexBytes:&_aspectRatio
+        //                               length:sizeof(_aspectRatio)
+        //                              atIndex:AAPLVertexInputIndexAspectRatio];
+
+        // Set the offscreen texture as the source texture.
+        [renderEncoder setFragmentTexture:self.texturePixelMapper.renderTargetTexture atIndex:DYTextureInputIndexColor];
+        // Draw quad with rendered texture.
+        [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
+        [renderEncoder endEncoding];
+    }
 }
 
 #pragma mark - setter
-- (void)setClearColor:(MTLClearColor)clearColor {
-    _clearColor = clearColor;
-}
-
 - (void)setModel:(L2DUserModel *)model {
     _model = model;
-
-    if (self.view && model) {
-        [self createBuffersWithView:self.view];
-        [self createTexturesWithView:self.view];
+    id <MTLDevice> device = self.device;
+    if (device && model) {
+        [self createBuffersWithView:device];
+        [self createTexturesWithView:device];
     }
 }
 
@@ -505,60 +595,18 @@
     self.transformBuffer = buffer;
 }
 
-#pragma mark - getter
-- (float)defaultRenderScale {
-    return 640.0 / 1046.0;
-}
-@end
-
-@implementation L2DMetalRender (Renderer)
-
-- (void)startWithView:(MTKView *)view {
-    self.view = view;
-
-    [self createPipelineStatesWithView:view];
-
-    if (self.model) {
-        [self createBuffersWithView:view];
-        [self createTexturesWithView:view];
-    }
-}
-
-- (void)drawableSizeWillChange:(MTKView *)view size:(CGSize)size {
-    id<MTLDevice> device = view.device;
-    if (!device) {
+- (void)setDrawableSize:(CGSize)drawableSize{
+    if (CGSizeEqualToSize(self.drawableSize, drawableSize) || CGSizeEqualToSize(drawableSize, CGSizeZero)) {
         return;
     }
-
-    /// Reset mask texture.
-    for (L2DMetalDrawable *drawable in self.drawables) {
-        @autoreleasepool {
-            if (drawable.maskCount > 0) {
-                MTLTextureDescriptor *maskTextureDesc = [[MTLTextureDescriptor alloc] init];
-                maskTextureDesc.pixelFormat = MTLPixelFormatBGRA8Unorm;
-                maskTextureDesc.storageMode = MTLStorageModePrivate;
-                maskTextureDesc.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
-                maskTextureDesc.width = (int)size.width;
-                maskTextureDesc.height = (int)size.height;
-                drawable.maskTexture = [device newTextureWithDescriptor:maskTextureDesc];
-            }
-        }
-    }
+    _drawableSize = drawableSize;
+    [self configTexturePixelMapperIfNeed];
+    [self configDrawableMaskTextureIfNeed];
 }
 
-- (void)update:(NSTimeInterval)time {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(rendererUpdateWithRender:duration:)]) {
-        [self.delegate rendererUpdateWithRender:self duration:time];
-    }
-    [self.model updateWithDeltaTime:time];
-    [self.model update];
-    [self updateDrawables];
+- (void)setTexturePixelMapper:(DYMTLTexturePixelMapper *)texturePixelMapper{
+    _texturePixelMapper = texturePixelMapper;
+    _renderToTextureRenderPassDescriptor.colorAttachments[0].texture = texturePixelMapper.renderTargetTexture;
 }
 
-- (void)beginRenderWithTime:(NSTimeInterval)time viewPort:(MTLViewport)viewPort commandBuffer:(id<MTLCommandBuffer>)commandBuffer passDescriptor:(MTLRenderPassDescriptor *)passDescriptor {
-    [self renderMasksWithViewPort:viewPort commandBuffer:commandBuffer];
-    [self renderDrawablesWithViewPort:viewPort
-                        commandBuffer:commandBuffer
-                       passDescriptor:passDescriptor];
-}
 @end

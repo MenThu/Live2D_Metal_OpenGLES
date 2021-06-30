@@ -87,6 +87,7 @@
 		6929ACC7268B438900A64F8E /* DYMTLTexturePixelMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYMTLTexturePixelMapper.h; sourceTree = "<group>"; };
 		6929ACC8268B438900A64F8E /* DYMetalRender.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DYMetalRender.m; sourceTree = "<group>"; };
 		6929ACC9268B438900A64F8E /* DYMetalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DYMetalView.m; sourceTree = "<group>"; };
+		69E1869B268C167E00C77B40 /* DYShaderTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYShaderTypes.h; sourceTree = "<group>"; };
 		8B723899A5CD03B23368EC0C /* Pods-iOSLive2DDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSLive2DDemo.debug.xcconfig"; path = "Target Support Files/Pods-iOSLive2DDemo/Pods-iOSLive2DDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		959FF45A25FC906300AB0924 /* iOSLive2DDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSLive2DDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		959FF45D25FC906300AB0924 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -572,6 +573,7 @@
 		95E3607C2600CF0D0092540E /* Shader */ = {
 			isa = PBXGroup;
 			children = (
+				69E1869B268C167E00C77B40 /* DYShaderTypes.h */,
 				95E3607D2600CF0D0092540E /* mask.metal */,
 				95E3607E2600CF0D0092540E /* basic.metal */,
 				95E3607F2600CF0D0092540E /* L2DBufferIndex.h */,
@@ -897,6 +899,7 @@
 					"$(inherited)",
 					"\"${SRCROOT}/iOSLive2DDemo/Live2DSDK/Core/include\"",
 					"\"${SRCROOT}/iOSLive2DDemo/Live2DSDK/Framework/src\"",
+					"\"${SRCROOT}/iOSLive2DDemo/DYMetalRender\"",
 				);
 				INFOPLIST_FILE = iOSLive2DDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;

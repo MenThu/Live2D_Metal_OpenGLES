@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface L2DMetalRender : NSObject
-@property (nonatomic, weak) id<MetalRenderDelegate> delegate;
+
 @property (nonatomic, strong) L2DUserModel *model;
 
 /// Model rendering origin, in normalized device coordinate (NDC).
@@ -52,22 +52,17 @@ NS_ASSUME_NONNULL_BEGIN
 /// 背景色
 @property (nonatomic, assign) MTLClearColor clearColor;
 
-/// 已经创建了 transformBuffer
-@property (nonatomic, copy) void (^didCreatedTransformBuffer)(void);
+@property (nonatomic, assign) CGSize drawableSize;
 
-/// 默认渲染人物高度与画布高度比例
-- (float)defaultRenderScale;
-@end
 
-@interface L2DMetalRender (Renderer)
-
-- (void)startWithView:(MTKView *)view;
-
-- (void)drawableSizeWillChange:(MTKView *)view size:(CGSize)size;
+- (instancetype)initWithDevice:(id<MTLDevice>)device pixelFormat:(MTLPixelFormat)pixelFormat;
 
 - (void)update:(NSTimeInterval)time;
 
-- (void)beginRenderWithTime:(NSTimeInterval)time viewPort:(MTLViewport)viewPort commandBuffer:(id<MTLCommandBuffer>)commandBuffer passDescriptor:(MTLRenderPassDescriptor *)passDescriptor;
+- (void)beginRenderWithTime:(NSTimeInterval)time
+                   viewPort:(MTLViewport)viewPort
+              commandBuffer:(id<MTLCommandBuffer>)commandBuffer
+             passDescriptor:(MTLRenderPassDescriptor *)passDescriptor;
 
 @end
 
