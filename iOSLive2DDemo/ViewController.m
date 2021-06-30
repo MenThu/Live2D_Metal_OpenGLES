@@ -8,6 +8,7 @@
 #import "ViewController.h"
 #import "OpenGLLive2DViewController.h"
 #import "MetalLive2DViewController.h"
+//#import "DYMetalController.h"
 
 @interface ViewController ()
 
@@ -46,7 +47,13 @@
 }
 
 - (void)pushMetalVc {
-    MetalLive2DViewController *vc = [MetalLive2DViewController new];
-    [self.navigationController pushViewController:vc animated:true];
+    UIViewController *tempVC = nil;
+#if 0
+    tempVC = [[DYMetalController alloc] init];
+#else
+    tempVC = [MetalLive2DViewController new];
+#endif
+    
+    [self.navigationController pushViewController:tempVC animated:true];
 }
 @end

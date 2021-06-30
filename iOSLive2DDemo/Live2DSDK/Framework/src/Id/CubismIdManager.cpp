@@ -80,7 +80,8 @@ CubismId* CubismIdManager::FindId(const csmChar* id) const
 {
     csmInt32 size = _ids.GetSize();
     
-    if (size < 0 || isinf(size)) return NULL;
+//    if (size < 0 || isinf(size)) return NULL;
+    if (size < 0) return NULL;
     
     for (csmUint32 i = 0; i < _ids.GetSize(); ++i)
     {

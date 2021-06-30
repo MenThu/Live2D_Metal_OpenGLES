@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6929ACCA268B438900A64F8E /* DYMTLTexturePixelMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 6929ACC3268B438900A64F8E /* DYMTLTexturePixelMapper.m */; };
+		6929ACCB268B438900A64F8E /* DYMetalRender.m in Sources */ = {isa = PBXBuildFile; fileRef = 6929ACC8268B438900A64F8E /* DYMetalRender.m */; };
+		6929ACCC268B438900A64F8E /* DYMetalView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6929ACC9268B438900A64F8E /* DYMetalView.m */; };
 		7A1D277AA1B7DB2B74818742 /* Pods_iOSLive2DDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABD79E68F398A48645A3DED9 /* Pods_iOSLive2DDemo.framework */; };
 		959FF45F25FC906300AB0924 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 959FF45E25FC906300AB0924 /* AppDelegate.m */; };
 		959FF46525FC906300AB0924 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 959FF46425FC906300AB0924 /* ViewController.m */; };
@@ -77,6 +80,13 @@
 
 /* Begin PBXFileReference section */
 		253391198FF3D86B94D1FB6F /* Pods-iOSLive2DDemo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSLive2DDemo.release.xcconfig"; path = "Target Support Files/Pods-iOSLive2DDemo/Pods-iOSLive2DDemo.release.xcconfig"; sourceTree = "<group>"; };
+		6929ACC3268B438900A64F8E /* DYMTLTexturePixelMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DYMTLTexturePixelMapper.m; sourceTree = "<group>"; };
+		6929ACC4268B438900A64F8E /* DYMetalRenderProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYMetalRenderProtocol.h; sourceTree = "<group>"; };
+		6929ACC5268B438900A64F8E /* DYMetalRender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYMetalRender.h; sourceTree = "<group>"; };
+		6929ACC6268B438900A64F8E /* DYMetalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYMetalView.h; sourceTree = "<group>"; };
+		6929ACC7268B438900A64F8E /* DYMTLTexturePixelMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYMTLTexturePixelMapper.h; sourceTree = "<group>"; };
+		6929ACC8268B438900A64F8E /* DYMetalRender.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DYMetalRender.m; sourceTree = "<group>"; };
+		6929ACC9268B438900A64F8E /* DYMetalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DYMetalView.m; sourceTree = "<group>"; };
 		8B723899A5CD03B23368EC0C /* Pods-iOSLive2DDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSLive2DDemo.debug.xcconfig"; path = "Target Support Files/Pods-iOSLive2DDemo/Pods-iOSLive2DDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		959FF45A25FC906300AB0924 /* iOSLive2DDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSLive2DDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		959FF45D25FC906300AB0924 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -232,6 +242,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6929ACC2268B438900A64F8E /* DYMetalRender */ = {
+			isa = PBXGroup;
+			children = (
+				6929ACC5268B438900A64F8E /* DYMetalRender.h */,
+				6929ACC8268B438900A64F8E /* DYMetalRender.m */,
+				6929ACC4268B438900A64F8E /* DYMetalRenderProtocol.h */,
+				6929ACC6268B438900A64F8E /* DYMetalView.h */,
+				6929ACC9268B438900A64F8E /* DYMetalView.m */,
+				6929ACC7268B438900A64F8E /* DYMTLTexturePixelMapper.h */,
+				6929ACC3268B438900A64F8E /* DYMTLTexturePixelMapper.m */,
+			);
+			path = DYMetalRender;
+			sourceTree = "<group>";
+		};
 		6E225663EBCA4C1B9D91618E /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -262,6 +286,7 @@
 		959FF45C25FC906300AB0924 /* iOSLive2DDemo */ = {
 			isa = PBXGroup;
 			children = (
+				6929ACC2268B438900A64F8E /* DYMetalRender */,
 				95E3605A2600CF0C0092540E /* Common */,
 				959FF51F25FCEEA200AB0924 /* Helper */,
 				959FF51C25FCEE7600AB0924 /* Live2DResources */,
@@ -547,10 +572,10 @@
 		95E3607C2600CF0D0092540E /* Shader */ = {
 			isa = PBXGroup;
 			children = (
+				95E3607D2600CF0D0092540E /* mask.metal */,
 				95E3607E2600CF0D0092540E /* basic.metal */,
 				95E3607F2600CF0D0092540E /* L2DBufferIndex.h */,
 				95E360802600CF0D0092540E /* L2DShaderType.h */,
-				95E3607D2600CF0D0092540E /* mask.metal */,
 			);
 			path = Shader;
 			sourceTree = "<group>";
@@ -673,11 +698,13 @@
 				95E360902600CF0E0092540E /* basic.metal in Sources */,
 				959FF50725FC93F900AB0924 /* csmRectF.cpp in Sources */,
 				959FF50625FC93F900AB0924 /* csmString.cpp in Sources */,
+				6929ACCC268B438900A64F8E /* DYMetalView.m in Sources */,
 				959FF4E925FC93F900AB0924 /* CubismBreath.cpp in Sources */,
 				959FF4E625FC93F900AB0924 /* CubismCdiJson.cpp in Sources */,
 				959FF4EE25FC93F900AB0924 /* CubismDebug.cpp in Sources */,
 				959FF4EA25FC93F900AB0924 /* CubismDefaultParameterId.cpp in Sources */,
 				959FF4F425FC93F900AB0924 /* CubismExpressionMotion.cpp in Sources */,
+				6929ACCA268B438900A64F8E /* DYMTLTexturePixelMapper.m in Sources */,
 				959FF4E825FC93F900AB0924 /* CubismEyeBlink.cpp in Sources */,
 				959FF4EB25FC93F900AB0924 /* CubismFramework.cpp in Sources */,
 				959FF4F825FC93F900AB0924 /* CubismId.cpp in Sources */,
@@ -723,6 +750,7 @@
 				959FF47025FC906500AB0924 /* main.m in Sources */,
 				95E3608F2600CF0E0092540E /* mask.metal in Sources */,
 				959FF48225FC919800AB0924 /* MetalLive2DViewController.m in Sources */,
+				6929ACCB268B438900A64F8E /* DYMetalRender.m in Sources */,
 				959FF47E25FC918100AB0924 /* OpenGLLive2DViewController.mm in Sources */,
 				95E360882600CF0E0092540E /* SBNSObjectProxy.m in Sources */,
 				95E35F2125FF66250092540E /* SBProductioEmotionExpression.m in Sources */,
@@ -864,7 +892,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = AUM2E6FK73;
+				DEVELOPMENT_TEAM = 25GP64SU6U;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${SRCROOT}/iOSLive2DDemo/Live2DSDK/Core/include\"",
@@ -899,7 +927,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = AUM2E6FK73;
+				DEVELOPMENT_TEAM = 25GP64SU6U;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${SRCROOT}/iOSLive2DDemo/Live2DSDK/Core/include\"",
