@@ -147,6 +147,8 @@
     self.mtkView.clearColor = self.clearColor;
 
     self.renderer.clearColor = self.clearColor;
+    
+    self.dyRender.clearColor = self.clearColor;
 }
 
 #pragma mark - L2DModelActionProtocol
@@ -275,7 +277,7 @@
     [self addSubview:mtkView];
     mtkView.delegate = self;
     mtkView.framebufferOnly = true;
-    mtkView.preferredFramesPerSecond = 30;
+    mtkView.preferredFramesPerSecond = 60;
     mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
     self.mtkView = mtkView;
     
@@ -336,9 +338,15 @@
 
     NSTimeInterval time = 1.0 / (NSTimeInterval)(view.preferredFramesPerSecond);
 
+    
+    
+#if USE_DYMETAL_RENDER == 1
+    [self.dyRender update:time];
+#else
     for (L2DMetalRender *render in self.renderers) {
         [render update:time];
     }
+#endif
 
     // Get drawable, create command buffer and pass to renderer.
     if (view.currentDrawable) {
@@ -347,7 +355,7 @@
             return;
         }
         // 先清空一次
-        [self clearDrawable:view.currentDrawable commandBuffer:commandBuffer];
+//        [self clearDrawable:view.currentDrawable commandBuffer:commandBuffer];
 
         // 然后创建
         MTLRenderPassDescriptor *renderPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
@@ -359,7 +367,6 @@
 
         // Renderers.
 #if USE_DYMETAL_RENDER == 1
-        [self.dyRender update:time];
         [self.dyRender renderWithinViewPort:self.viewPort
                               commandBuffer:commandBuffer
                              passDescriptor:renderPassDescriptor];
@@ -380,6 +387,8 @@
 #if USE_DYMETAL_RENDER == 1
         [self testPixelBuffer];
 #endif
+    }else{
+        NSLog(@"can not draw");
     }
 }
 

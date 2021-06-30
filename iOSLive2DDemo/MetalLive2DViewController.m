@@ -35,8 +35,8 @@
     self.view.backgroundColor = UIColor.orangeColor;
 
     [self.view addSubview:self.live2DView];
-    self.live2DView.backgroundColor = UIColor.clearColor;
-    self.live2DView.preferredFramesPerSecond = 30;
+    self.live2DView.backgroundColor = UIColor.whiteColor;
+    self.live2DView.preferredFramesPerSecond = 60;
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -77,11 +77,15 @@
         NSString *dirName = @"Live2DResources/Shanbao/";
         NSString *mocJsonName = @"Shanbao.model3.json";
         
-//        NSString *dirName = @"Live2DResources/test1.20/";
-//        NSString *mocJsonName = @"test1.20.model3.json";
+//        dirName = @"Live2DResources/test1.20/";
+//        mocJsonName = @"test1.20.model3.json";
         
-//        NSString *dirName = @"Live2DResources/Haru/";
-//        NSString *mocJsonName = @"Haru.model3.json";
+//        dirName = @"Live2DResources/Rice/";
+//        mocJsonName = @"Rice.model3.json";
+//
+//        dirName = @"Live2DResources/Mark/";
+//        mocJsonName = @"Mark.model3.json";
+
         
         [self.live2DView loadLive2DModelWithDir:dirName mocJsonName:mocJsonName];
         self.hasLoadResource = YES;
@@ -89,7 +93,8 @@
 }
 
 #pragma mark - MetalRenderDelegate
-- (void)rendererUpdateWithRender:(L2DMetalRender *)renderer duration:(NSTimeInterval)duration {
+- (void)rendererUpdateWithRender:(L2DMetalRender *)renderer
+                        duration:(NSTimeInterval)duration {
 }
 
 #pragma mark - lazy load

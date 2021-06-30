@@ -8,7 +8,7 @@
 #import "ViewController.h"
 #import "OpenGLLive2DViewController.h"
 #import "MetalLive2DViewController.h"
-//#import "DYMetalController.h"
+#import "DYMetalController.h"
 
 @interface ViewController ()
 
@@ -48,7 +48,7 @@
 
 - (void)pushMetalVc {
     UIViewController *tempVC = nil;
-#if 0
+#if 1
     tempVC = [[DYMetalController alloc] init];
 #else
     tempVC = [MetalLive2DViewController new];

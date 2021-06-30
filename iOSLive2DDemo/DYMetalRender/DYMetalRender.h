@@ -12,6 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class DYMTLTexturePixelMapper;
+@class L2DUserModel;
 
 @interface DYMetalRender : NSObject <DYMetalRenderProtocol>
 
@@ -26,16 +27,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) CGFloat scale;
 @property (nonatomic, assign) matrix_float4x4 transform;
 
+/// 清空背景所用的颜色
 @property (nonatomic, assign) MTLClearColor clearColor;
-
-
-- (void)update:(NSTimeInterval)time;
-
 
 /// 初始化DYMetalRender
 /// @param device  代表GPU硬件的对象，一般由MTLCreateSystemDefaultDevice生成
 /// @param pixelFormat 最终呈现内容的物体的像素格式
-- (instancetype)initWithDevice:(id <MTLDevice>)device pixelFormat:(MTLPixelFormat)pixelFormat;
+- (instancetype)initWithDevice:(id<MTLDevice>)device
+                   pixelFormat:(MTLPixelFormat)pixelFormat;
+
+
+/// 加载Live2D模型
+/// @param model 封装了Live2D模型的OC对象
+- (void)loadLive2DModel:(L2DUserModel *)model;
 
 /// 在制定窗口下渲染live2D模型，内部会渲染到texturePixelMapper的metal纹理上，如果有编码或者其它需要，可以直接访问texturePixelMapper.pixelbuffer获取到画面CPU的数据
 /// @param viewPort 视口，与承载内容的CAMetalLayer一样大小
@@ -44,6 +48,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)renderWithinViewPort:(MTLViewport)viewPort
                commandBuffer:(id<MTLCommandBuffer>)commandBuffer
               passDescriptor:(MTLRenderPassDescriptor *)passDescriptor;
+
+/// 刷新
+/// @param time 间隔时间
+- (void)update:(NSTimeInterval)time;
 
 @end
 
