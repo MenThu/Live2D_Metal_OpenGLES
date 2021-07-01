@@ -61,9 +61,27 @@
 
 //    self.live2DView.frame = CGRectMake(0, 200, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame) * 1 - 300);
     self.live2DView.frame = self.view.bounds;
+    
+    
+    NSString *dirName = nil;
+    NSString *mocJsonName = nil;
+    
+//    dirName = @"Live2DResources/Shanbao/";
+//    mocJsonName = @"Shanbao.model3.json";
+    
+//        dirName = @"Live2DResources/test1.20/";
+//        mocJsonName = @"test1.20.model3.json";
+    
+//        dirName = @"Live2DResources/Rice/";
+//        mocJsonName = @"Rice.model3.json";
+    
+    dirName = @"Live2DResources/nainiu/";
+    mocJsonName = @"nainiu.model3.json";
 
     if (!self.hasLoadResource) {
-        [self.live2DView loadLive2DModelWithDir:@"Live2DResources/Shanbao/" mocJsonName:@"Shanbao.model3.json"];
+        
+        
+        [self.live2DView loadLive2DModelWithDir:dirName mocJsonName:mocJsonName];
         self.hasLoadResource = YES;
     }
 }

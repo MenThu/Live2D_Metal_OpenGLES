@@ -77,7 +77,7 @@ using namespace Live2D::Cubism::Framework::DefaultParameterId;
 
         csmByte *buffer = (csmByte *)[data bytes];
         csmSizeInt size = (unsigned int)[data length];
-        _model->LoadModel(buffer, size);
+        _model->LoadModel(buffer, size);//size=368960
 
         // Expression
         if (_modelSetting->GetExpressionCount() > 0) {
@@ -100,12 +100,12 @@ using namespace Live2D::Cubism::Framework::DefaultParameterId;
         }
 
         // Physics
-        if (strcmp(_modelSetting->GetPhysicsFileName(), "") != 0) {
+        if (strcmp(_modelSetting->GetPhysicsFileName(), "") != 0) {//has value
             csmString path = _modelSetting->GetPhysicsFileName();
             path = _modelHomeDir + path;
 
             buffer = CreateBuffer(path.GetRawString(), &size);
-            _model->LoadPhysics(buffer, size);
+            _model->LoadPhysics(buffer, size);//size = 7857
             DeleteBuffer(buffer, path.GetRawString());
         }
 
@@ -120,7 +120,8 @@ using namespace Live2D::Cubism::Framework::DefaultParameterId;
         }
 
         // EyeBlink
-        if (_modelSetting->GetEyeBlinkParameterCount() > 0) {
+        csmInt32 eyeBlinkCount = _modelSetting->GetEyeBlinkParameterCount();
+        if (eyeBlinkCount > 0) {//has value eyeBlinkCount = 2
             _model->_eyeBlink = CubismEyeBlink::Create(_modelSetting);
         }
 
@@ -148,18 +149,12 @@ using namespace Live2D::Cubism::Framework::DefaultParameterId;
             DeleteBuffer(buffer, path.GetRawString());
         }
 
-        // EyeBlinkIds
-        {
-            csmInt32 eyeBlinkIdCount = _modelSetting->GetEyeBlinkParameterCount();
-            for (csmInt32 i = 0; i < eyeBlinkIdCount; ++i) {
-                _eyeBlinkIds.PushBack(_modelSetting->GetEyeBlinkParameterId(i));
-            }
-        }
+        
 
         // LipSyncIds
         {
             csmInt32 lipSyncIdCount = _modelSetting->GetLipSyncParameterCount();
-            for (csmInt32 i = 0; i < lipSyncIdCount; ++i) {
+            for (csmInt32 i = 0; i < lipSyncIdCount; ++i) {//lipSyncIdCount=1
                 _lipSyncIds.PushBack(_modelSetting->GetLipSyncParameterId(i));
             }
         }
@@ -172,7 +167,8 @@ using namespace Live2D::Cubism::Framework::DefaultParameterId;
         _model->GetModel()->SaveParameters();
 
         // Motion
-        for (csmInt32 i = 0; i < _modelSetting->GetMotionGroupCount(); i++) {
+        Csm::csmInt32 motionGroupCount = _modelSetting->GetMotionGroupCount();
+        for (csmInt32 i = 0; i < motionGroupCount; i++) {//motionGroupCount=1
             const csmChar *group = _modelSetting->GetMotionGroupName(i);
             [self preloadMotionGroup:group];
         }
@@ -412,7 +408,8 @@ static void FinishedMotion(Csm::ACubismMotion *self) {
 
 - (NSArray<NSURL *> *)textureURLs {
     NSMutableArray<NSURL *> *urls = [NSMutableArray array];
-    for (int i = 0; i < _modelSetting->GetTextureCount(); ++i) {
+    csmInt32 textureCount = _modelSetting->GetTextureCount();
+    for (int i = 0; i < textureCount; ++i) {
         @autoreleasepool {
             NSString *name = [NSString stringWithCString:_modelSetting->GetTextureFileName(i) encoding:NSUTF8StringEncoding];
             [urls addObject:[NSURL URLWithString:name relativeToURL:_baseURL]];
@@ -533,7 +530,7 @@ static void FinishedMotion(Csm::ACubismMotion *self) {
 - (void)preloadMotionGroup:(const csmChar *)group {
     const csmInt32 count = _modelSetting->GetMotionCount(group);
 
-    for (csmInt32 i = 0; i < count; i++) {
+    for (csmInt32 i = 0; i < count; i++) {//has value count = 1
         // ex) idle_0
         csmString name = Utils::CubismString::GetFormatedString("%s_%d", group, i);
         csmString path = _modelSetting->GetMotionFileName(group, i);
@@ -545,12 +542,12 @@ static void FinishedMotion(Csm::ACubismMotion *self) {
         CubismMotion *tmpMotion = static_cast<CubismMotion *>(_model->LoadMotion(buffer, size, name.GetRawString()));
 
         csmFloat32 fadeTime = _modelSetting->GetMotionFadeInTimeValue(group, i);
-        if (fadeTime >= 0.0f) {
+        if (fadeTime >= 0.0f) {//fadeTime=-1
             tmpMotion->SetFadeInTime(fadeTime);
         }
 
         fadeTime = _modelSetting->GetMotionFadeOutTimeValue(group, i);
-        if (fadeTime >= 0.0f) {
+        if (fadeTime >= 0.0f) {//fadeTime=-1
             tmpMotion->SetFadeOutTime(fadeTime);
         }
         tmpMotion->SetEffectIds(_eyeBlinkIds, _lipSyncIds);

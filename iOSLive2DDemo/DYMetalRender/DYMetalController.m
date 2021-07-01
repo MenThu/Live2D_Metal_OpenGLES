@@ -9,11 +9,13 @@
 #import "DYMetalController.h"
 #import "DYMetalView.h"
 #import "L2DUserModel.h"
+#import "DYLive2DModel.h"
 
 @interface DYMetalController ()
 
 @property (nonatomic, weak) DYMetalView *dyMetalView;
-@property (nonatomic, strong) L2DUserModel *model;
+@property (nonatomic, strong) DYLive2DModel *model;
+
 
 @end
 
@@ -21,29 +23,20 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.title = @"Metal For Live2D Render";
     self.view.backgroundColor = UIColor.blackColor;
     
-    NSString *dirName = nil;
-    NSString *mocJsonName = nil;
+//    @"Shanbao";
+//    @"nainiu";
+//    @"Rice";
+//    @"Mark";
+//    @"Hiyori"
     
-    dirName = @"Live2DResources/Shanbao/";
-    mocJsonName = @"Shanbao.model3.json";
-    
-//        dirName = @"Live2DResources/test1.20/";
-//        mocJsonName = @"test1.20.model3.json";
-    
-        dirName = @"Live2DResources/Rice/";
-        mocJsonName = @"Rice.model3.json";
-
-    
-//        dirName = @"Live2DResources/Mark/";
-//        mocJsonName = @"Mark.model3.json";
-    
-    self.model = [[L2DUserModel alloc] initWithJsonDir:dirName mocJsonName:mocJsonName];
+    self.model = [[DYLive2DModel alloc] initWithBundleName:@"Live2DResource" jsonFileName:@"Hiyori"];
     
     DYMetalView *dyMetalView = [[DYMetalView alloc] initWithFrame:CGRectZero];
     dyMetalView.backgroundColor = UIColor.orangeColor;
-    dyMetalView.renderFPS = 40.f;
+    dyMetalView.renderFPS = 60.f;
     [self.view addSubview:(_dyMetalView = dyMetalView)];
     [dyMetalView loadLive2DModel:self.model];
     

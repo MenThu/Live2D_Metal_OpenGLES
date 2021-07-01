@@ -13,6 +13,30 @@
 @class L2DTextureManager;
 @class L2DMatrix44Bridge;
 
+
+#if 0
+
+// Drawables.
+- (int)drawableCount;
+- (RawIntArray *)renderOrders;
+- (bool)isRenderOrderDidChangedForDrawable:(int)index;
+- (RawFloatArray *)vertexPositionsForDrawable:(int)index;
+- (RawFloatArray *)vertexTextureCoordinateForDrawable:(int)index;
+- (RawUShortArray *)vertexIndicesForDrawable:(int)index;
+- (int)textureIndexForDrawable:(int)index;
+- (RawIntArray *)masksForDrawable:(int)index;
+- (L2DBlendMode)blendingModeForDrawable:(int)index;
+- (bool)cullingModeForDrawable:(int)index;
+- (float)opacityForDrawable:(int)index;
+- (bool)visibilityForDrawable:(int)index;
+- (NSArray<NSURL *> *)textureURLs;
+- (void)update;
+- (void)updateWithDeltaTime:(NSTimeInterval)dt;
+- (bool)isOpacityDidChangedForDrawable:(int)index;
+- (bool)isVertexPositionDidChangedForDrawable:(int)index;
+
+#endif
+
 /// Live2D 模型
 @interface L2DUserModel : NSObject <L2DModelActionProtocol>
 

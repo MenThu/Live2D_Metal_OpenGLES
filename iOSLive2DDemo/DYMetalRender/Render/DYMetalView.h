@@ -8,7 +8,7 @@
 #import <UIKit/UIKit.h>
 #import "DYMetalRenderProtocol.h"
 
-@class L2DUserModel;
+@class DYLive2DModel;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 加载模型
 /// @param model live2D模型数据
-- (void)loadLive2DModel:(L2DUserModel *)model;
+- (void)loadLive2DModel:(DYLive2DModel *)model;
 
 /// 开始渲染
 - (void)startRender;

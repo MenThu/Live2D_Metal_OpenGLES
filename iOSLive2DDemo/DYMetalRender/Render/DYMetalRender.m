@@ -8,9 +8,9 @@
 #import "DYMetalRender.h"
 #import "DYMTLTexturePixelMapper.h"
 #import "L2DBufferIndex.h"
-#import "L2DUserModel.h"
 #import "L2DMetalDrawable.h"
 #import "DYShaderTypes.h"
+#import "DYLive2DModel.h"
 
 @interface DYMetalRender ()
 
@@ -24,7 +24,7 @@
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineStateBlendingNormal;
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineStateMasking;
 @property (nonatomic, strong) id<MTLRenderPipelineState> pipelineStateUploadTexture;
-@property (nonatomic, weak) L2DUserModel *live2DModel;
+@property (nonatomic, weak) DYLive2DModel *live2DModel;
 @property (nonatomic, strong) id<MTLBuffer> transformBuffer;
 @property (nonatomic, strong) NSMutableArray <L2DMetalDrawable *> *drawables;
 @property (nonatomic, copy) NSArray <L2DMetalDrawable *> *drawableSorted;
@@ -61,7 +61,7 @@
     if (!device) {
         return;
     }
-    L2DUserModel *model = self.live2DModel;
+    DYLive2DModel *model = self.live2DModel;
     if (!model) {
         return;
     }
@@ -145,20 +145,21 @@
     if (!device) {
         return;
     }
-    L2DUserModel *model = self.live2DModel;
+    DYLive2DModel *model = self.live2DModel;
     if (!model) {
         return;
     }
-    if (model.textureURLs) {
+    NSArray <NSData *> *textureDataArray = model.textureDataArray;
+    if (textureDataArray && textureDataArray.count >= 1) {
         MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
         [self.textures removeAllObjects];
-        for (NSURL *url in model.textureURLs) {
+        NSMutableDictionary *options = [NSMutableDictionary dictionary];
+        options[MTKTextureLoaderOptionTextureStorageMode] = @(MTLStorageModePrivate);
+        options[MTKTextureLoaderOptionTextureUsage] = @(MTLTextureUsageShaderRead);
+        options[MTKTextureLoaderOptionSRGB] = @(false);
+        for (NSData *textureData in textureDataArray) {
             @autoreleasepool {
-                id<MTLTexture> texture = [loader newTextureWithContentsOfURL:url
-                                                                     options:@{MTKTextureLoaderOptionTextureStorageMode: @(MTLStorageModePrivate),
-                                                                               MTKTextureLoaderOptionTextureUsage: @(MTLTextureUsageShaderRead),
-                                                                               MTKTextureLoaderOptionSRGB: @(false)}
-                                                                       error:nil];
+                id<MTLTexture> texture = [loader newTextureWithData:textureData options:options error:nil];
                 [self.textures addObject:texture];
             }
         }
@@ -333,7 +334,7 @@
 }
 
 #pragma mark - Public
-- (void)loadLive2DModel:(L2DUserModel *)model{
+- (void)loadLive2DModel:(DYLive2DModel *)model{
     _live2DModel = model;
     id <MTLDevice> device = self.currentDevice;
     if (device && model) {
@@ -359,7 +360,7 @@
 
 #pragma mark - Render
 - (void)updateDrawables {
-    L2DUserModel *model = self.live2DModel;
+    DYLive2DModel *model = self.live2DModel;
     if (!model) {
         return;
     }

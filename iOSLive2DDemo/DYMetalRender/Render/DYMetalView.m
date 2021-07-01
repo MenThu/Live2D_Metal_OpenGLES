@@ -7,7 +7,7 @@
 
 #import "DYMetalView.h"
 #import "DYMetalRender.h"
-#import "L2DUserModel.h"
+#import "DYLive2DModel.h"
 
 static NSInteger DEFAULT_RENDER_FPS = 30;
 
@@ -16,7 +16,7 @@ static NSInteger DEFAULT_RENDER_FPS = 30;
 @property (nonatomic, strong) MTLRenderPassDescriptor *renderPassDescriptor;
 @property (nonatomic, nonnull, readwrite) CAMetalLayer *metalLayer;
 @property (nonatomic, strong) CADisplayLink *displayLink;
-@property (nonatomic, weak) L2DUserModel *live2DModel;
+@property (nonatomic, weak) DYLive2DModel *live2DModel;
 @property (nonatomic, strong) DYMetalRender *metalRender;
 @property (nonatomic, strong) id <MTLDevice> currentDevice;
 @property (nonatomic, strong) id <MTLCommandQueue> commandQueue;
@@ -48,6 +48,10 @@ static NSInteger DEFAULT_RENDER_FPS = 30;
 - (void)layoutSubviews{
     [super layoutSubviews];
     [self reSizeLayerIfNeed];
+}
+
+- (void)dealloc{
+    NSLog(@"[%s:%d] [%@:%p]", __func__, __LINE__, NSStringFromClass(self.class), self);
 }
 
 #pragma mark - Private
@@ -122,7 +126,7 @@ static NSInteger DEFAULT_RENDER_FPS = 30;
 }
 
 #pragma mark - Public
-- (void)loadLive2DModel:(L2DUserModel *)model{
+- (void)loadLive2DModel:(DYLive2DModel *)model{
     self.live2DModel = model;
     [self.metalRender loadLive2DModel:model];
 }

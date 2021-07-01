@@ -14,7 +14,7 @@
 #import "DYMTLTexturePixelMapper.h"
 #import "DYMetalRender.h"
 
-#define USE_DYMETAL_RENDER 1
+#define USE_DYMETAL_RENDER 0
 
 @interface KGMetalLive2DView () <MTKViewDelegate>
 @property (nonatomic, strong) L2DUserModel *model;
@@ -148,7 +148,9 @@
 
     self.renderer.clearColor = self.clearColor;
     
+#if USE_DYMETAL_RENDER
     self.dyRender.clearColor = self.clearColor;
+#endif
 }
 
 #pragma mark - L2DModelActionProtocol
@@ -277,7 +279,7 @@
     [self addSubview:mtkView];
     mtkView.delegate = self;
     mtkView.framebufferOnly = true;
-    mtkView.preferredFramesPerSecond = 60;
+    mtkView.preferredFramesPerSecond = 40;
     mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
     self.mtkView = mtkView;
     

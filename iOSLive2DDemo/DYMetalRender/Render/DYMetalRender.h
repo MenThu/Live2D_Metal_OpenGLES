@@ -12,7 +12,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class DYMTLTexturePixelMapper;
-@class L2DUserModel;
+@class DYLive2DModel;
 
 @interface DYMetalRender : NSObject <DYMetalRenderProtocol>
 
@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 加载Live2D模型
 /// @param model 封装了Live2D模型的OC对象
-- (void)loadLive2DModel:(L2DUserModel *)model;
+- (void)loadLive2DModel:(DYLive2DModel *)model;
 
 /// 在制定窗口下渲染live2D模型，内部会渲染到texturePixelMapper的metal纹理上，如果有编码或者其它需要，可以直接访问texturePixelMapper.pixelbuffer获取到画面CPU的数据
 /// @param viewPort 视口，与承载内容的CAMetalLayer一样大小
