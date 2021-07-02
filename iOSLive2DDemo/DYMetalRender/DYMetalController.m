@@ -21,24 +21,30 @@
 
 @implementation DYMetalController
 
+- (instancetype)initWithModel:(NSString *)modelName inBundle:(NSString *)bundleName{
+    if (self = [super init]) {
+        //    @"Shanbao";
+        //    @"nainiu";
+        //    @"Rice";
+        //    @"Mark";
+        //    @"Hiyori"
+        //    @"Live2DResource"
+        
+        self.model = [[DYLive2DModel alloc] initWithBundleName:bundleName jsonFileName:modelName];
+        
+        DYMetalView *dyMetalView = [[DYMetalView alloc] initWithFrame:CGRectZero];
+        dyMetalView.backgroundColor = UIColor.orangeColor;
+        dyMetalView.renderFPS = 60.f;
+        [self.view addSubview:(_dyMetalView = dyMetalView)];
+        [dyMetalView loadLive2DModel:self.model];
+    }
+    return self;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"Metal For Live2D Render";
     self.view.backgroundColor = UIColor.blackColor;
-    
-//    @"Shanbao";
-//    @"nainiu";
-//    @"Rice";
-//    @"Mark";
-//    @"Hiyori"
-    
-    self.model = [[DYLive2DModel alloc] initWithBundleName:@"Live2DResource" jsonFileName:@"Hiyori"];
-    
-    DYMetalView *dyMetalView = [[DYMetalView alloc] initWithFrame:CGRectZero];
-    dyMetalView.backgroundColor = UIColor.orangeColor;
-    dyMetalView.renderFPS = 60.f;
-    [self.view addSubview:(_dyMetalView = dyMetalView)];
-    [dyMetalView loadLive2DModel:self.model];
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(applicationWillEnterForeground)

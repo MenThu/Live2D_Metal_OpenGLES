@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface DYMetalController : UIViewController
 
+- (instancetype)initWithModel:(NSString *)modelName inBundle:(NSString *)bundleName;
+
 @end
 
 NS_ASSUME_NONNULL_END

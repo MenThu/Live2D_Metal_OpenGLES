@@ -9,6 +9,7 @@
 #import "OpenGLLive2DViewController.h"
 #import "MetalLive2DViewController.h"
 #import "DYMetalController.h"
+#import "MetalListController.h"
 
 @interface ViewController ()
 
@@ -49,7 +50,7 @@
 - (void)pushMetalVc {
     UIViewController *tempVC = nil;
 #if 1
-    tempVC = [[DYMetalController alloc] init];
+    tempVC = [[MetalListController alloc] init];
 #else
     tempVC = [MetalLive2DViewController new];
 #endif

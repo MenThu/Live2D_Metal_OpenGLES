@@ -18,6 +18,7 @@
 		69671D4F268D995A00FC1B3A /* L2DUserModel.mm in Sources */ = {isa = PBXBuildFile; fileRef = 69671D4E268D995A00FC1B3A /* L2DUserModel.mm */; };
 		69671D51268DB9A900FC1B3A /* Live2DResource.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 69671D50268DB9A900FC1B3A /* Live2DResource.bundle */; };
 		69671D53268DBB3A00FC1B3A /* Live2DResources in Resources */ = {isa = PBXBuildFile; fileRef = 69671D52268DBB3A00FC1B3A /* Live2DResources */; };
+		697370C2268EB2AA007E3A53 /* MetalListController.m in Sources */ = {isa = PBXBuildFile; fileRef = 697370C1268EB2AA007E3A53 /* MetalListController.m */; };
 		7A1D277AA1B7DB2B74818742 /* Pods_iOSLive2DDemo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABD79E68F398A48645A3DED9 /* Pods_iOSLive2DDemo.framework */; };
 		959FF45F25FC906300AB0924 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 959FF45E25FC906300AB0924 /* AppDelegate.m */; };
 		959FF46525FC906300AB0924 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 959FF46425FC906300AB0924 /* ViewController.m */; };
@@ -106,6 +107,8 @@
 		69671D4E268D995A00FC1B3A /* L2DUserModel.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = L2DUserModel.mm; sourceTree = "<group>"; };
 		69671D50268DB9A900FC1B3A /* Live2DResource.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Live2DResource.bundle; sourceTree = "<group>"; };
 		69671D52268DBB3A00FC1B3A /* Live2DResources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Live2DResources; sourceTree = "<group>"; };
+		697370C0268EB2AA007E3A53 /* MetalListController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalListController.h; sourceTree = "<group>"; };
+		697370C1268EB2AA007E3A53 /* MetalListController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MetalListController.m; sourceTree = "<group>"; };
 		8B723899A5CD03B23368EC0C /* Pods-iOSLive2DDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iOSLive2DDemo.debug.xcconfig"; path = "Target Support Files/Pods-iOSLive2DDemo/Pods-iOSLive2DDemo.debug.xcconfig"; sourceTree = "<group>"; };
 		959FF45A25FC906300AB0924 /* iOSLive2DDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSLive2DDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		959FF45D25FC906300AB0924 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -362,6 +365,8 @@
 				959FF47D25FC918100AB0924 /* OpenGLLive2DViewController.mm */,
 				959FF46325FC906300AB0924 /* ViewController.h */,
 				959FF46425FC906300AB0924 /* ViewController.m */,
+				697370C0268EB2AA007E3A53 /* MetalListController.h */,
+				697370C1268EB2AA007E3A53 /* MetalListController.m */,
 			);
 			path = iOSLive2DDemo;
 			sourceTree = "<group>";
@@ -740,6 +745,7 @@
 				959FF4EE25FC93F900AB0924 /* CubismDebug.cpp in Sources */,
 				959FF4EA25FC93F900AB0924 /* CubismDefaultParameterId.cpp in Sources */,
 				959FF4F425FC93F900AB0924 /* CubismExpressionMotion.cpp in Sources */,
+				697370C2268EB2AA007E3A53 /* MetalListController.m in Sources */,
 				6929ACCA268B438900A64F8E /* DYMTLTexturePixelMapper.m in Sources */,
 				959FF4E825FC93F900AB0924 /* CubismEyeBlink.cpp in Sources */,
 				959FF4EB25FC93F900AB0924 /* CubismFramework.cpp in Sources */,
